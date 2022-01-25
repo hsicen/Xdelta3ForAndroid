@@ -1,3 +1,18 @@
+# Copyright (C) 2009 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 LOCAL_PATH := $(call my-dir)
 cmd-strip = $(TOOLCHAIN_PREFIX)strip --strip-all -x $1
 include $(CLEAR_VARS)
@@ -19,11 +34,6 @@ LOCAL_CFLAGS += -fvisibility=hidden
 LOCAL_LDLIBS += -L$(LOCAL_PATH) -llog
 
 LOCAL_MODULE    := xdelta3
-LOCAL_SRC_FILES := help/JNIHelp.h\
-				   help/JNIHelp.cpp\
-				   help/log.h\
-				   Patch.h\
-				   Patch.cpp\
-				   Core.cpp
+LOCAL_SRC_FILES := patcher.c
 
 include $(BUILD_SHARED_LIBRARY)

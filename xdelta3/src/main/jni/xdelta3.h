@@ -1,21 +1,18 @@
-/* xdelta 3 - delta compression tools and library
- * Copyright (C) 2001, 2003, 2004, 2005, 2006, 2007,
- * 2008, 2009, 2010.  Joshua P. MacDonald
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/* xdelta3 - delta compression tools and library
+   Copyright 2016 Joshua MacDonald
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 
 /* To know more about Xdelta, start by reading xdelta3.c.  If you are
  * ready to use the API, continue reading here.  There are two
@@ -110,63 +107,104 @@
  */
 #ifndef _WIN32
 #include <stdint.h>
-#else
+#else /* WIN32 case */
 #define WIN32_LEAN_AND_MEAN
+
+#ifndef WINVER
 #if XD3_USE_LARGEFILE64
 /* 64 bit file offsets: uses GetFileSizeEx and SetFilePointerEx.
  * requires Win2000 or newer version of WinNT */
 #define WINVER		0x0500
 #define _WIN32_WINNT	0x0500
-#else
+#else /* xoff_t is 32bit */
 /* 32 bit (DWORD) file offsets: uses GetFileSize and
  * SetFilePointer. compatible with win9x-me and WinNT4 */
 #define WINVER		0x0400
 #define _WIN32_WINNT	0x0400
-#endif
+#endif /* if XD3_USE_LARGEFILE64 */
+#endif /* ifndef WINVER */
+
 #include <windows.h>
+
+/* _MSV_VER is defined by Microsoft tools, not by mingw32 */
 #ifdef _MSC_VER
-#define inline
+/*#define inline*/
 typedef signed int     ssize_t;
 #if _MSC_VER < 1600
 typedef unsigned char  uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned long  uint32_t;
 typedef ULONGLONG      uint64_t;
-#else
+#else /* _MSC_VER >= 1600 */
 /* For MSVC10 and above */
 #include <stdint.h>
-#endif
-#else
+#endif /* _MSC_VER < 1600 */
+#else /* _MSC_VER not defined  */
 /* mingw32, lcc and watcom provide a proper header */
 #include <stdint.h>
-#endif
-#endif
+#endif /* _MSC_VER defined */
+#endif /* _WIN32 defined */
 
 typedef uint32_t usize_t;
 
 #if XD3_USE_LARGEFILE64
+/* xoff_t is a 64-bit type */
 #define __USE_FILE_OFFSET64 1 /* GLIBC: for 64bit fileops, ... ? */
+
 #ifndef _LARGEFILE_SOURCE
 #define _LARGEFILE_SOURCE
 #endif
+
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
 
+#if defined(_WIN32)
+typedef uint64_t xoff_t;
+/* Note: The following generates benign warnings in a mingw
+ * cross-compiler */
+#define Q "I64"
+#elif SIZEOF_UNSIGNED_LONG == 8
+typedef unsigned long xoff_t;
+#define Q "l"
+#elif SIZEOF_SIZE_T == 8
+typedef size_t xoff_t;
+#define Q "z"
+#elif SIZEOF_UNSIGNED_LONG_LONG == 8
+typedef unsigned long long xoff_t;
+#define Q "ll"
+#endif /* #define Q */
+
 typedef uint64_t xoff_t;
 #define SIZEOF_XOFF_T 8
-#define SIZEOF_USIZE_T 4
-#ifndef WIN32
-#define Q "ll"
-#else
-#define Q "I64"
-#endif
+
+#else /* XD3_USE_LARGEFILE64 == 0 */
+
+#if SIZEOF_UNSIGNED_INT == 4
+typedef unsigned int xoff_t;
+#elif SIZEOF_UNSIGNED_LONG == 4
+typedef unsigned long xoff_t;
 #else
 typedef uint32_t xoff_t;
+#endif /* xoff_t is 32 bits */
+
 #define SIZEOF_XOFF_T 4
-#define SIZEOF_USIZE_T 4
 #define Q
-#endif
+#endif /* 64 vs 32 bit xoff_t */
+
+/* Note: This gets modified in the 64bithash branch. */
+#define SIZEOF_USIZE_T 4
+
+#if SIZEOF_SIZE_T == 4
+#define Z "z"
+#elif SIZEOF_SIZE_T == 8
+#ifdef _WIN32
+#define Z "I64"
+#else /* !_WIN32 */
+#define Z "z"
+#endif /* Windows or not */
+#else
+#endif /* size_t printf flags */
 
 #define USE_UINT32 (SIZEOF_USIZE_T == 4 || \
 		    SIZEOF_XOFF_T == 4 || REGRESSION_TEST)
@@ -305,12 +343,8 @@ typedef int              (xd3_comp_table_func) (xd3_stream *stream,
 #define XD3_ASSERT(x) (void)0
 #endif  /* XD3_DEBUG */
 
-#ifndef max
-#define max(x,y) ((x) < (y) ? (y) : (x))
-#endif
-#ifndef min
-#define min(x,y) ((x) < (y) ? (x) : (y))
-#endif
+#define xd3_max(x,y) ((x) < (y) ? (y) : (x))
+#define xd3_min(x,y) ((x) < (y) ? (x) : (y))
 
 /****************************************************************
  PUBLIC ENUMS
@@ -345,7 +379,7 @@ typedef enum {
   XD3_INVALID_INPUT = -17712, /* invalid input/decoder error */
   XD3_NOSECOND    = -17713, /* when secondary compression finds no
 			       improvement. */
-  XD3_UNIMPLEMENTED = -17714  /* currently VCD_TARGET */
+  XD3_UNIMPLEMENTED = -17714  /* currently VCD_TARGET, VCD_CODETABLE */
 } xd3_rvalues;
 
 /* special values in config->flags */
@@ -380,9 +414,6 @@ typedef enum
 				      the encoder. */
   XD3_ADLER32_NOVER  = (1 << 11),  /* disable checksum verification in
 				      the decoder. */
-
-  XD3_ALT_CODE_TABLE = (1 << 12),  /* for testing th
-				      e alternate code table encoding. */
 
   XD3_NOCOMPRESS     = (1 << 13),  /* disable ordinary data
 				    * compression feature, only search
@@ -749,10 +780,6 @@ struct _xd3_source
   xoff_t              max_blkno;  /* Maximum block, if eof is known,
 				   * otherwise, equals frontier_blkno
 				   * (initially 0). */
-  xoff_t              frontier_blkno;  /* If eof is unknown, the next
-					* source position to be read.
-					* Otherwise, equal to
-					* max_blkno. */
   usize_t             onlastblk;  /* Number of bytes on max_blkno */
   int                 eof_known;  /* Set to true when the first
 				   * partial block is read. */
