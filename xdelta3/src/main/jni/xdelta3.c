@@ -2228,7 +2228,7 @@ xd3_iopt_finish_encoding (xd3_stream *stream, xd3_rinst *inst)
     {
       if (stream->iout->code2 != 0)
 	{
-	  if ((ret = xd3_emit_double (stream, stream->iout, inst, 
+	  if ((ret = xd3_emit_double (stream, stream->iout, inst,
 				      stream->iout->code2))) { return ret; }
 
 	  xd3_iopt_free_nonadd (stream, stream->iout);
@@ -3326,7 +3326,7 @@ xd3_process_stream (int            is_encode,
 	case XD3_OUTPUT: { /* memcpy below */ break; }
 	case XD3_INPUT: {
 	  n = xd3_min(stream->winsize, input_size - ipos);
-	  if (n == 0) 
+	  if (n == 0)
 	    {
 	      goto done;
 	    }
@@ -3654,7 +3654,7 @@ xd3_srcwin_setup (xd3_stream *stream)
 
   /* Otherwise, we have to make a guess.  More copies may still be
    * issued, but we have to decide the source window base and length
-   * now.  
+   * now.
    * TODO: This may not working well in practice, more testing needed. */
   src->srcbase = stream->match_minaddr;
   src->srclen  = xd3_max ((usize_t) length,
@@ -4350,13 +4350,13 @@ xd3_srcwin_move_point (xd3_stream *stream, usize_t *next_move_point)
 
   absolute_input_pos = stream->total_in + stream->input_position;
 
-  /* Immediately read the entire window. 
+  /* Immediately read the entire window.
    *
    * Note: this reverses a long held policy, at this point in the
    * code, of advancing relatively slowly as the input is read, which
    * results in better compression for very-similar inputs, but worse
    * compression where data is deleted near the beginning of the file.
-   * 
+   *
    * The new policy is simpler, somewhat slower and can benefit, or
    * slightly worsen, compression performance. */
   if (absolute_input_pos < stream->src->max_winsize / 2)
@@ -4451,7 +4451,7 @@ xd3_srcwin_move_point (xd3_stream *stream, usize_t *next_move_point)
 	  /* TODO: This would be significantly faster if the compiler
 	   * knew stream->smatcher.large_look (which the template for
 	   * xd3_string_match_* allows). */
-	  usize_t cksum = xd3_large_cksum (&stream->large_hash, 
+	  usize_t cksum = xd3_large_cksum (&stream->large_hash,
 					   stream->src->curblk + blkpos,
 					   stream->smatcher.large_look);
 	  usize_t hval = xd3_checksum_hash (& stream->large_hash, cksum);

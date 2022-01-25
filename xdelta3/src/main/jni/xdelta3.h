@@ -156,6 +156,8 @@ typedef ULONGLONG      uint64_t;
 
 #endif /* _WIN32 defined */
 
+typedef uint32_t usize_t;
+typedef uint64_t xoff_t;
 /* Settings based on the size of xoff_t (32 vs 64 file offsets) */
 #if XD3_USE_LARGEFILE64
 /* xoff_t is a 64-bit type */
@@ -169,10 +171,8 @@ typedef ULONGLONG      uint64_t;
 #define _FILE_OFFSET_BITS 64
 #endif
 
-static_assert(SIZEOF_SIZE_T
-== sizeof(size_t), "SIZEOF_SIZE_T not correctly set");
-static_assert(SIZEOF_UNSIGNED_LONG_LONG
-== sizeof(unsigned long long), "SIZEOF_UNSIGNED_LONG_LONG not correctly set");
+// static_assert(SIZEOF_SIZE_T == sizeof(size_t), "SIZEOF_SIZE_T not correctly set");
+// static_assert(SIZEOF_UNSIGNED_LONG_LONG == sizeof(unsigned long long), "SIZEOF_UNSIGNED_LONG_LONG not correctly set");
 
 /* Set a xoff_t typedef and the "Q" printf insert. */
 #if defined(_WIN32)
@@ -251,7 +251,7 @@ typedef uint32_t usize_t;
 #define Z "z"
 #endif /* Windows or not */
 #else
-#error Bad configure script
+/*#error Bad configure script*/
 #endif /* size_t printf flags */
 
 #define USE_UINT32 (SIZEOF_USIZE_T == 4 || \
