@@ -1,8 +1,10 @@
 package com.lenovo.leos.xdelta3;
 
+/**
+ * so 加载工具类
+ */
 public class Patch {
-
-    private static boolean sIsPatchLoaded = false;
+    private static boolean sIsPatchLoaded;
 
     static {
         try {
@@ -29,9 +31,9 @@ public class Patch {
     }
 
     /**
-     * native 方法定义
+     * native 方法定义 在[patcher.c]中实现
      *
-     * @param encode  1编码/2解码
+     * @param encode  1编码/0解码 (低版本 apk + 差分包合成安装包传 0)
      * @param inPath  patch包路径
      * @param srcPath 旧版Apk包路径
      * @param outPath 合成的新包路径
